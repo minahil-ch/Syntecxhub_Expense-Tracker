@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import TransactionList from '../components/TransactionList';
 import { Filter, Download, Plus } from 'lucide-react';
 
-const Transactions = ({ transactions, filteredTransactions, handleDeleteTransaction, filterCategory, setFilterCategory, setShowForm }) => {
+const Transactions = ({ transactions, filteredTransactions, handleDeleteTransaction, filterCategory, setFilterCategory, setShowForm, searchQuery }) => {
   return (
     <div className="animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
@@ -50,6 +50,7 @@ const Transactions = ({ transactions, filteredTransactions, handleDeleteTransact
         <TransactionList 
           transactions={filteredTransactions} 
           onDelete={handleDeleteTransaction} 
+          searchQuery={searchQuery}
         />
       </div>
     </div>

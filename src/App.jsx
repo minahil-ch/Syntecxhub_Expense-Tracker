@@ -9,6 +9,7 @@ import { mockApi } from './services/mockApi';
 // Layout & Components
 import MainLayout from './layouts/MainLayout';
 import TransactionForm from './components/TransactionForm';
+import BudgetForm from './components/BudgetForm';
 
 // Pages
 import Login from './pages/Login';
@@ -37,10 +38,20 @@ function App() {
 function AppContent() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState(['Food', 'Work', 'Housing', 'Entertainment', 'Shopping', 'Other']);
+  const [budgets, setBudgets] = useState([
+    { id: '1', category: 'Food', limit: 600, spent: 0 },
+    { id: '2', category: 'Housing', limit: 1200, spent: 0 }
+  ]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCategory, setFilterCategory] = useState('All');
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: 'Welcome to Syntecxhub!', time: '1h ago', read: false },
+    { id: 2, text: 'You reached 80% of your Food budget', time: '2h ago', read: false }
+  ]);
 
   // useEffect to fetch data
   useEffect(() => {
@@ -49,6 +60,13 @@ function AppContent() {
       try {
         const data = await mockApi.fetchTransactions();
         setTransactions(data);
+        
+        // Load custom categories and budgets from localStorage
+        const storedCats = localStorage.getItem('syntecxhub_categories');
+        if (storedCats) setCategories(JSON.parse(storedCats));
+        
+        const storedBudgets = localStorage.getItem('syntecxhub_budgets');
+        if (storedBudgets) setBudgets(JSON.parse(storedBudgets));
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -57,6 +75,16 @@ function AppContent() {
     };
     loadData();
   }, [user]);
+
+  // Sync budgets with transactions
+  const activeBudgets = useMemo(() => {
+    return budgets.map(budget => {
+      const spent = transactions
+        .filter(t => t.category === budget.category && t.type === 'expense')
+        .reduce((acc, t) => acc + t.amount, 0);
+      return { ...budget, spent };
+    });
+  }, [transactions, budgets]);
 
   // useMemo for summary calculations
   const summary = useMemo(() => {
@@ -114,13 +142,19 @@ function AppContent() {
         
         <Route path="/" element={
           <ProtectedRoute>
-            <MainLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
+            <MainLayout 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery}
+              notifications={notifications}
+              setNotifications={setNotifications}
+            >
               <Dashboard 
                 summary={summary}
                 transactions={transactions}
                 filteredTransactions={filteredTransactions}
                 handleDeleteTransaction={handleDeleteTransaction}
                 setShowForm={setShowForm}
+                budgets={activeBudgets}
               />
             </MainLayout>
           </ProtectedRoute>
@@ -128,7 +162,12 @@ function AppContent() {
 
         <Route path="/transactions" element={
           <ProtectedRoute>
-            <MainLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
+            <MainLayout 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery}
+              notifications={notifications}
+              setNotifications={setNotifications}
+            >
               <Transactions 
                 transactions={transactions}
                 filteredTransactions={filteredTransactions}
@@ -136,6 +175,8 @@ function AppContent() {
                 filterCategory={filterCategory}
                 setFilterCategory={setFilterCategory}
                 setShowForm={setShowForm}
+                searchQuery={searchQuery}
+                categories={categories}
               />
             </MainLayout>
           </ProtectedRoute>
@@ -143,24 +184,53 @@ function AppContent() {
 
         <Route path="/reports" element={
           <ProtectedRoute>
-            <MainLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-              <Reports transactions={transactions} />
+            <MainLayout 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery}
+              notifications={notifications}
+              setNotifications={setNotifications}
+            >
+              <Reports transactions={transactions} categories={categories} />
             </MainLayout>
           </ProtectedRoute>
         } />
 
         <Route path="/budgets" element={
           <ProtectedRoute>
-            <MainLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-              <Budgets />
+            <MainLayout 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery}
+              notifications={notifications}
+              setNotifications={setNotifications}
+            >
+              <Budgets 
+                budgets={activeBudgets} 
+                setBudgets={(newBudgets) => {
+                  setBudgets(newBudgets);
+                  localStorage.setItem('syntecxhub_budgets', JSON.stringify(newBudgets));
+                }}
+                categories={categories}
+                setShowBudgetForm={() => setShowBudgetForm(true)}
+              />
             </MainLayout>
           </ProtectedRoute>
         } />
 
         <Route path="/settings" element={
           <ProtectedRoute>
-            <MainLayout searchQuery={searchQuery} setSearchQuery={setSearchQuery}>
-              <Settings />
+            <MainLayout 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery}
+              notifications={notifications}
+              setNotifications={setNotifications}
+            >
+              <Settings 
+                categories={categories}
+                setCategories={(newCats) => {
+                  setCategories(newCats);
+                  localStorage.setItem('syntecxhub_categories', JSON.stringify(newCats));
+                }}
+              />
             </MainLayout>
           </ProtectedRoute>
         } />
@@ -174,6 +244,19 @@ function AppContent() {
           <TransactionForm 
             onClose={() => setShowForm(false)} 
             onSubmit={handleAddTransaction} 
+            categories={categories}
+          />
+        )}
+        {showBudgetForm && (
+          <BudgetForm 
+            onClose={() => setShowBudgetForm(false)} 
+            onSubmit={(newBudget) => {
+              const updated = [...budgets, { ...newBudget, id: Date.now().toString(), spent: 0 }];
+              setBudgets(updated);
+              localStorage.setItem('syntecxhub_budgets', JSON.stringify(updated));
+              setShowBudgetForm(false);
+            }}
+            categories={categories}
           />
         )}
       </AnimatePresence>

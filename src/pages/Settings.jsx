@@ -1,67 +1,130 @@
-import React from 'react';
-import { User, Bell, Shield, Palette, Smartphone, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Bell, Shield, Palette, Smartphone, ChevronRight, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const Settings = () => {
+const Settings = ({ categories, setCategories }) => {
+  const { user, login } = useAuth();
+  const [newName, setNewName] = useState(user?.name || '');
+  const [newEmail, setNewEmail] = useState(user?.email || '');
+  const [newCat, setNewCat] = useState('');
+  const [showSaved, setShowSaved] = useState(false);
+
+  const handleSaveProfile = (e) => {
+    e.preventDefault();
+    login({ name: newName, email: newEmail });
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 3000);
+  };
+
+  const addCategory = () => {
+    if (newCat && !categories.includes(newCat)) {
+      setCategories([...categories, newCat]);
+      setNewCat('');
+    }
+  };
+
+  const removeCategory = (cat) => {
+    setCategories(categories.filter(c => c !== cat));
+  };
+
   return (
-    <div className="animate-fade-in max-w-4xl mx-auto">
+    <div className="animate-fade-in max-w-4xl mx-auto pb-20">
       <h2 className="text-2xl font-bold mb-8">Account Settings</h2>
 
-      <div className="space-y-6">
+      <AnimatePresence>
+        {showSaved && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-24 right-8 bg-success text-white px-6 py-3 rounded-xl shadow-xl z-50 flex items-center gap-2"
+          >
+            <CheckCircle size={20} />
+            Changes saved successfully!
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="space-y-8">
+        {/* Profile Section */}
         <section className="glass-card p-6">
           <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
             <User size={20} className="text-primary" />
             Profile Information
           </h3>
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 group-hover:border-primary transition-all">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Minahil" alt="avatar" />
+          <form onSubmit={handleSaveProfile} className="space-y-6">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
+              <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10">
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${newName}`} alt="avatar" />
               </div>
-              <button className="absolute bottom-0 right-0 p-2 rounded-full bg-primary text-white shadow-lg border border-bg-dark">
-                <Smartphone size={14} />
+              <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="space-y-2">
+                  <label className="text-sm text-text-muted">Full Name</label>
+                  <input 
+                    type="text" 
+                    value={newName} 
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" 
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm text-text-muted">Email Address</label>
+                  <input 
+                    type="email" 
+                    value={newEmail} 
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" 
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <button type="submit" className="btn-primary px-8 py-2">Update Profile</button>
+            </div>
+          </form>
+        </section>
+
+        {/* Categories Section */}
+        <section className="glass-card p-6">
+          <h3 className="text-lg font-bold mb-6 flex items-center gap-2">
+            <Palette size={20} className="text-primary" />
+            Manage Categories
+          </h3>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="New Category Name" 
+                className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary"
+                value={newCat}
+                onChange={(e) => setNewCat(e.target.value)}
+              />
+              <button 
+                onClick={addCategory}
+                className="btn-primary p-2 rounded-xl"
+              >
+                <Plus size={24} />
               </button>
             </div>
-            
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-              <div className="space-y-2">
-                <label className="text-sm text-text-muted">Full Name</label>
-                <input type="text" defaultValue="Minahil" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-text-muted">Email Address</label>
-                <input type="email" defaultValue="minahil@example.com" className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-white outline-none focus:border-primary" />
-              </div>
+            <div className="flex flex-wrap gap-2">
+              {categories.map(cat => (
+                <div key={cat} className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg group hover:border-primary transition-all">
+                  <span className="text-sm">{cat}</span>
+                  <button onClick={() => removeCategory(cat)} className="text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-all">
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
+        {/* Other Settings */}
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SettingsCard 
-            icon={<Bell size={20} />} 
-            title="Notifications" 
-            desc="Configure alerts and reminders" 
-          />
-          <SettingsCard 
-            icon={<Shield size={20} />} 
-            title="Security" 
-            desc="Password and 2FA settings" 
-          />
-          <SettingsCard 
-            icon={<Palette size={20} />} 
-            title="Appearance" 
-            desc="Theme and color preferences" 
-          />
-          <SettingsCard 
-            icon={<User size={20} />} 
-            title="Account Data" 
-            desc="Export or delete your data" 
-          />
+          <SettingsCard icon={<Bell size={20} />} title="Notifications" desc="Configure alerts and reminders" />
+          <SettingsCard icon={<Shield size={20} />} title="Security" desc="Password and 2FA settings" />
         </section>
-
-        <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-white/5">
-          <button className="px-6 py-2 rounded-xl text-text-muted hover:text-white transition-colors">Cancel</button>
-          <button className="btn-primary px-8 py-2">Save Changes</button>
-        </div>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import SummaryCard from '../components/SummaryCard';
 import TransactionList from '../components/TransactionList';
 import Charts from '../components/Charts';
 
-const Dashboard = ({ summary, transactions, filteredTransactions, handleDeleteTransaction, setShowForm }) => {
+const Dashboard = ({ summary, transactions, filteredTransactions, handleDeleteTransaction, setShowForm, budgets }) => {
   return (
     <div className="animate-fade-in">
       {/* Summary Grid */}
@@ -60,12 +60,19 @@ const Dashboard = ({ summary, transactions, filteredTransactions, handleDeleteTr
           </div>
 
           <div className="glass-card p-6">
-            <h3 className="text-xl font-bold mb-4">Expense Categories</h3>
+            <h3 className="text-xl font-bold mb-4">Budget Progress</h3>
             <div className="space-y-4">
-              <CategoryProgress label="Food" value={45} color="bg-rose-500" />
-              <CategoryProgress label="Housing" value={70} color="bg-indigo-500" />
-              <CategoryProgress label="Work" value={20} color="bg-emerald-500" />
-              <CategoryProgress label="Leisure" value={55} color="bg-amber-500" />
+              {budgets.length > 0 ? budgets.map(budget => (
+                <CategoryProgress 
+                  key={budget.id}
+                  label={budget.category} 
+                  spent={budget.spent}
+                  limit={budget.limit}
+                  color={budget.spent > budget.limit ? 'bg-danger' : 'bg-primary'} 
+                />
+              )) : (
+                <p className="text-sm text-text-muted">No budgets set. Create one in the Budgets tab.</p>
+              )}
             </div>
           </div>
         </aside>
@@ -74,15 +81,16 @@ const Dashboard = ({ summary, transactions, filteredTransactions, handleDeleteTr
   );
 };
 
-function CategoryProgress({ label, value, color }) {
+function CategoryProgress({ label, spent, limit, color }) {
+  const value = Math.min((spent / limit) * 100, 100);
   return (
     <div>
       <div className="flex justify-between text-sm mb-1">
         <span className="text-text-muted">{label}</span>
-        <span className="font-semibold">{value}%</span>
+        <span className="font-semibold">{Math.round(value)}%</span>
       </div>
       <div className="w-full bg-white/5 rounded-full h-1.5">
-        <div className={`h-1.5 rounded-full ${color}`} style={{ width: `${value}%` }}></div>
+        <div className={`h-1.5 rounded-full ${color} transition-all duration-500`} style={{ width: `${value}%` }}></div>
       </div>
     </div>
   );

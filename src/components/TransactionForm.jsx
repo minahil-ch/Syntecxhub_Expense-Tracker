@@ -2,12 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const TransactionForm = ({ onClose, onSubmit }) => {
+const TransactionForm = ({ onClose, onSubmit, categories }) => {
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
     type: 'expense',
-    category: 'Food'
+    category: categories[0] || 'Food'
   });
 
   const titleInputRef = useRef(null);
@@ -69,7 +69,7 @@ const TransactionForm = ({ onClose, onSubmit }) => {
               value={formData.title}
               onChange={handleChange}
               placeholder="e.g. Starbucks Coffee"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all text-white outline-none"
               required
             />
           </div>
@@ -84,7 +84,7 @@ const TransactionForm = ({ onClose, onSubmit }) => {
                 onChange={handleChange}
                 placeholder="0.00"
                 step="0.01"
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all text-white outline-none"
                 required
               />
             </div>
@@ -94,7 +94,7 @@ const TransactionForm = ({ onClose, onSubmit }) => {
                 name="type"
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all text-white outline-none"
               >
                 <option value="expense">Expense</option>
                 <option value="income">Income</option>
@@ -108,14 +108,11 @@ const TransactionForm = ({ onClose, onSubmit }) => {
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all text-white outline-none"
             >
-              <option value="Food">Food</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Housing">Housing</option>
-              <option value="Work">Work</option>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Other">Other</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
             </select>
           </div>
 

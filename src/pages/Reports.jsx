@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Charts from '../components/Charts';
 import { Calendar, ChevronRight, TrendingUp, TrendingDown } from 'lucide-react';
 
-const Reports = ({ transactions }) => {
+const Reports = ({ transactions, categories }) => {
+  const stats = useMemo(() => {
+    const income = transactions.filter(t => t.type === 'income').reduce((acc, t) => acc + t.amount, 0);
+    const expenses = transactions.filter(t => t.type === 'expense').reduce((acc, t) => acc + t.amount, 0);
+    
+    // Category totals
+    const catTotals = {};
+    transactions.filter(t => t.type === 'expense').forEach(t => {
+      catTotals[t.category] = (catTotals[t.category] || 0) + t.amount;
+    });
+
+    const topCategories = Object.entries(catTotals)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([name, amount]) => ({
+        name,
+        amount,
+        percentage: expenses > 0 ? Math.round((amount / expenses) * 100) : 0
+      }));
+
+    return { income, expenses, savings: income - expenses, topCategories };
+  }, [transactions]);
+
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in space-y-8 pb-20">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Financial Analytics</h2>
         <button className="glass-card px-4 py-2 flex items-center gap-2 text-sm text-text-muted hover:text-white">
@@ -20,18 +42,26 @@ const Reports = ({ transactions }) => {
         <div className="glass-card p-6">
           <h3 className="text-xl font-bold mb-6">Income vs Expenses</h3>
           <div className="space-y-6">
-            <StatRow label="Monthly Income" value="$12,450" change="+15%" icon={<TrendingUp size={20} />} color="text-success" />
-            <StatRow label="Monthly Expenses" value="$8,200" change="+2%" icon={<TrendingDown size={20} />} color="text-danger" />
-            <StatRow label="Net Savings" value="$4,250" change="+24%" icon={<TrendingUp size={20} />} color="text-primary" />
+            <StatRow label="Total Income" value={`$${stats.income.toLocaleString()}`} change="+15%" icon={<TrendingUp size={20} />} color="text-success" />
+            <StatRow label="Total Expenses" value={`$${stats.expenses.toLocaleString()}`} change="+2%" icon={<TrendingDown size={20} />} color="text-danger" />
+            <StatRow label="Net Savings" value={`$${stats.savings.toLocaleString()}`} change="+24%" icon={<TrendingUp size={20} />} color="text-primary" />
           </div>
         </div>
 
         <div className="glass-card p-6">
           <h3 className="text-xl font-bold mb-6">Top Spending Categories</h3>
           <div className="space-y-6">
-            <CategoryItem label="Housing" amount="$3,200" percentage="39%" color="bg-indigo-500" />
-            <CategoryItem label="Food & Dining" amount="$1,450" percentage="18%" color="bg-rose-500" />
-            <CategoryItem label="Entertainment" amount="$980" percentage="12%" color="bg-purple-500" />
+            {stats.topCategories.length > 0 ? stats.topCategories.map((cat, idx) => (
+              <CategoryItem 
+                key={cat.name}
+                label={cat.name} 
+                amount={`$${cat.amount.toLocaleString()}`} 
+                percentage={`${cat.percentage}%`} 
+                color={idx === 0 ? 'bg-primary' : idx === 1 ? 'bg-secondary' : 'bg-accent'} 
+              />
+            )) : (
+              <p className="text-center text-text-muted py-10">No expense data available</p>
+            )}
           </div>
         </div>
       </div>
@@ -67,7 +97,7 @@ function CategoryItem({ label, amount, percentage, color }) {
         <span className="text-sm font-semibold text-text-muted">{percentage}</span>
       </div>
       <div className="w-full bg-white/5 rounded-full h-2">
-        <div className={`h-2 rounded-full ${color}`} style={{ width: percentage }}></div>
+        <div className={`h-2 rounded-full ${color} transition-all duration-700`} style={{ width: percentage }}></div>
       </div>
     </div>
   );

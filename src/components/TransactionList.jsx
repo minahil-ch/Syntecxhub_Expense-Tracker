@@ -11,7 +11,20 @@ const categoryIcons = {
   Other: { icon: <ShoppingBag size={20} />, color: 'text-slate-500', bg: 'bg-slate-500/10' },
 };
 
-const TransactionList = ({ transactions, onDelete }) => {
+const HighlightText = ({ text, highlight }) => {
+  if (!highlight.trim()) return <span>{text}</span>;
+  const regex = new RegExp(`(${highlight})`, 'gi');
+  const parts = text.split(regex);
+  return (
+    <span>
+      {parts.map((part, i) => 
+        regex.test(part) ? <span key={i} className="bg-primary/30 text-white rounded px-0.5">{part}</span> : part
+      )}
+    </span>
+  );
+};
+
+const TransactionList = ({ transactions, onDelete, searchQuery = '' }) => {
   if (transactions.length === 0) {
     return (
       <div className="text-center py-12 text-text-muted">
@@ -41,7 +54,9 @@ const TransactionList = ({ transactions, onDelete }) => {
                   {category.icon}
                 </div>
                 <div>
-                  <h4 className="font-semibold text-text-main">{t.title}</h4>
+                  <h4 className="font-semibold text-text-main">
+                    <HighlightText text={t.title} highlight={searchQuery} />
+                  </h4>
                   <p className="text-xs text-text-muted">
                     {new Date(t.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} • {t.category}
                   </p>
