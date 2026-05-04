@@ -38,6 +38,7 @@ function App() {
 function AppContent() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
+  const [manualIncome, setManualIncome] = useState(0);
   const [categories, setCategories] = useState(['Food', 'Work', 'Housing', 'Entertainment', 'Shopping', 'Other']);
   const [budgets, setBudgets] = useState([
     { id: '1', category: 'Food', limit: 600, spent: 0 },
@@ -65,7 +66,9 @@ function AppContent() {
         const storedCats = localStorage.getItem('syntecxhub_categories');
         if (storedCats) setCategories(JSON.parse(storedCats));
         
-        const storedBudgets = localStorage.getItem('syntecxhub_budgets');
+        // Load settings
+        const storedManualIncome = localStorage.getItem('syntecxhub_manual_income');
+        if (storedManualIncome) setManualIncome(parseFloat(storedManualIncome));
         if (storedBudgets) setBudgets(JSON.parse(storedBudgets));
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -88,15 +91,16 @@ function AppContent() {
 
   // useMemo for summary calculations
   const summary = useMemo(() => {
-    const income = transactions
+    const transactionIncome = transactions
       .filter(t => t.type === 'income')
       .reduce((acc, t) => acc + Number(t.amount), 0);
+    const totalIncome = transactionIncome + manualIncome;
     const expenses = transactions
       .filter(t => t.type === 'expense')
       .reduce((acc, t) => acc + Number(t.amount), 0);
-    const balance = income - expenses;
-    return { income, expenses, balance };
-  }, [transactions]);
+    const balance = totalIncome - expenses;
+    return { income: totalIncome, expenses, balance };
+  }, [transactions, manualIncome]);
 
   // useMemo for filtered transactions
   const filteredTransactions = useMemo(() => {
@@ -229,6 +233,11 @@ function AppContent() {
                 setCategories={(newCats) => {
                   setCategories(newCats);
                   localStorage.setItem('syntecxhub_categories', JSON.stringify(newCats));
+                }}
+                manualIncome={manualIncome}
+                setManualIncome={(val) => {
+                  setManualIncome(val);
+                  localStorage.setItem('syntecxhub_manual_income', val.toString());
                 }}
               />
             </MainLayout>

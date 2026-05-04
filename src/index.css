@@ -56,6 +56,12 @@ button {
 input, select, textarea {
   font-family: inherit;
   outline: none;
+  color: white;
+}
+
+select option {
+  background-color: #1e293b;
+  color: white;
 }
 
 .glass-card {
