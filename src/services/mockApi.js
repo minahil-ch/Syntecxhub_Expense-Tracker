@@ -1,85 +1,42 @@
-import { v4 as uuidv4 } from 'uuid';
-
-const INITIAL_DATA = [
-  {
-    id: uuidv4(),
-    title: 'Salary',
-    amount: 5000,
-    type: 'income',
-    category: 'Work',
-    date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: uuidv4(),
-    title: 'Grocery Store',
-    amount: 150,
-    type: 'expense',
-    category: 'Food',
-    date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: uuidv4(),
-    title: 'Rent',
-    amount: 1200,
-    type: 'expense',
-    category: 'Housing',
-    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: uuidv4(),
-    title: 'Freelance Project',
-    amount: 800,
-    type: 'income',
-    category: 'Work',
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: uuidv4(),
-    title: 'Netflix Subscription',
-    amount: 15,
-    type: 'expense',
-    category: 'Entertainment',
-    date: new Date().toISOString(),
-  }
-];
-
-const STORAGE_KEY = 'syntecxhub_expenses';
+const API_URL = 'http://localhost:5000/api';
 
 export const mockApi = {
-  fetchTransactions: () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const storedData = localStorage.getItem(STORAGE_KEY);
-        if (storedData) {
-          resolve(JSON.parse(storedData));
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DATA));
-          resolve(INITIAL_DATA);
-        }
-      }, 800); // Simulate network delay
-    });
+  fetchTransactions: async () => {
+    try {
+      const response = await fetch(`${API_URL}/transactions`);
+      if (!response.ok) throw new Error('Network response was not ok');
+      return await response.json();
+    } catch (error) {
+      console.error('Fetch error:', error);
+      return [];
+    }
   },
 
-  saveTransaction: (transaction) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const storedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const newTransaction = { ...transaction, id: uuidv4(), date: new Date().toISOString() };
-        const updatedData = [newTransaction, ...storedData];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-        resolve(newTransaction);
-      }, 500);
-    });
+  saveTransaction: async (transaction) => {
+    try {
+      const response = await fetch(`${API_URL}/transactions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transaction),
+      });
+      if (!response.ok) throw new Error('Failed to save');
+      return await response.json();
+    } catch (error) {
+      console.error('Save error:', error);
+      throw error;
+    }
   },
 
-  deleteTransaction: (id) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const storedData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-        const updatedData = storedData.filter(t => t.id !== id);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-        resolve(id);
-      }, 500);
-    });
+  deleteTransaction: async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/transactions/${id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete');
+      return id;
+    } catch (error) {
+      console.error('Delete error:', error);
+      throw error;
+    }
   }
 };

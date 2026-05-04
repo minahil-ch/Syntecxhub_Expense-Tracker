@@ -39,6 +39,7 @@ function AppContent() {
   const { user } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [manualIncome, setManualIncome] = useState(0);
+  const [totalBudget, setTotalBudget] = useState(2000);
   const [categories, setCategories] = useState(['Food', 'Work', 'Housing', 'Entertainment', 'Shopping', 'Other']);
   const [budgets, setBudgets] = useState([
     { id: '1', category: 'Food', limit: 600, spent: 0 },
@@ -69,6 +70,10 @@ function AppContent() {
         // Load settings
         const storedManualIncome = localStorage.getItem('syntecxhub_manual_income');
         if (storedManualIncome) setManualIncome(parseFloat(storedManualIncome));
+        
+        const storedTotalBudget = localStorage.getItem('syntecxhub_total_budget');
+        if (storedTotalBudget) setTotalBudget(parseFloat(storedTotalBudget));
+        
         if (storedBudgets) setBudgets(JSON.parse(storedBudgets));
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -159,6 +164,7 @@ function AppContent() {
                 handleDeleteTransaction={handleDeleteTransaction}
                 setShowForm={setShowForm}
                 budgets={activeBudgets}
+                totalBudget={totalBudget}
               />
             </MainLayout>
           </ProtectedRoute>
@@ -194,7 +200,7 @@ function AppContent() {
               notifications={notifications}
               setNotifications={setNotifications}
             >
-              <Reports transactions={transactions} categories={categories} />
+              <Reports transactions={transactions} categories={categories} totalBudget={totalBudget} />
             </MainLayout>
           </ProtectedRoute>
         } />
@@ -238,6 +244,11 @@ function AppContent() {
                 setManualIncome={(val) => {
                   setManualIncome(val);
                   localStorage.setItem('syntecxhub_manual_income', val.toString());
+                }}
+                totalBudget={totalBudget}
+                setTotalBudget={(val) => {
+                  setTotalBudget(val);
+                  localStorage.setItem('syntecxhub_total_budget', val.toString());
                 }}
               />
             </MainLayout>

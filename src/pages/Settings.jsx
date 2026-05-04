@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
-import { User, Bell, Shield, Palette, Smartphone, ChevronRight, Plus, Trash2, CheckCircle, DollarSign } from 'lucide-react';
+import { User, Bell, Shield, Palette, Smartphone, ChevronRight, Plus, Trash2, CheckCircle, DollarSign, Target } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Settings = ({ categories, setCategories, manualIncome, setManualIncome }) => {
+const Settings = ({ categories, setCategories, manualIncome, setManualIncome, totalBudget, setTotalBudget }) => {
   const { user, login } = useAuth();
   const [newName, setNewName] = useState(user?.name || '');
   const [newEmail, setNewEmail] = useState(user?.email || '');
   const [newCat, setNewCat] = useState('');
   const [incomeVal, setIncomeVal] = useState(manualIncome || '');
+  const [budgetVal, setBudgetVal] = useState(totalBudget || '');
   const [showSaved, setShowSaved] = useState(false);
 
-  const handleSaveProfile = (e) => {
+  const handleSaveAll = (e) => {
     e.preventDefault();
     login({ name: newName, email: newEmail });
     setManualIncome(parseFloat(incomeVal) || 0);
+    setTotalBudget(parseFloat(budgetVal) || 0);
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 3000);
   };
@@ -43,7 +45,7 @@ const Settings = ({ categories, setCategories, manualIncome, setManualIncome }) 
             className="fixed top-24 right-8 bg-success text-white px-6 py-3 rounded-xl shadow-xl z-50 flex items-center gap-2"
           >
             <CheckCircle size={20} />
-            Changes saved successfully!
+            Settings updated successfully!
           </motion.div>
         )}
       </AnimatePresence>
@@ -55,7 +57,7 @@ const Settings = ({ categories, setCategories, manualIncome, setManualIncome }) 
             <User size={20} className="text-primary" />
             Profile Information
           </h3>
-          <form onSubmit={handleSaveProfile} className="space-y-6">
+          <form onSubmit={handleSaveAll} className="space-y-6">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-8">
               <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 shadow-lg">
                 <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${newName}`} alt="avatar" />
@@ -82,21 +84,39 @@ const Settings = ({ categories, setCategories, manualIncome, setManualIncome }) 
               </div>
             </div>
 
-            <div className="pt-6 border-t border-white/5">
-              <h3 className="text-lg font-bold mb-4 flex items-center gap-2 text-white">
-                <DollarSign size={20} className="text-success" />
-                Financial Settings
-              </h3>
-              <div className="max-w-xs space-y-2">
-                <label className="text-sm font-semibold text-text-muted">Fixed Monthly Income ($)</label>
-                <input 
-                  type="number" 
-                  placeholder="0.00"
-                  value={incomeVal}
-                  onChange={(e) => setIncomeVal(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary font-bold text-xl"
-                />
-                <p className="text-[10px] text-text-muted uppercase tracking-wider">This will be added to your total income automatically.</p>
+            <div className="pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+                  <DollarSign size={20} className="text-success" />
+                  Fixed Monthly Income
+                </h3>
+                <div className="space-y-2">
+                  <input 
+                    type="number" 
+                    placeholder="0.00"
+                    value={incomeVal}
+                    onChange={(e) => setIncomeVal(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary font-bold text-xl"
+                  />
+                  <p className="text-[10px] text-text-muted uppercase tracking-wider">Added to balance automatically.</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-white">
+                  <Target size={20} className="text-primary" />
+                  Total Monthly Budget
+                </h3>
+                <div className="space-y-2">
+                  <input 
+                    type="number" 
+                    placeholder="0.00"
+                    value={budgetVal}
+                    onChange={(e) => setBudgetVal(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-primary font-bold text-xl"
+                  />
+                  <p className="text-[10px] text-text-muted uppercase tracking-wider">Your target spending limit.</p>
+                </div>
               </div>
             </div>
 
@@ -130,7 +150,7 @@ const Settings = ({ categories, setCategories, manualIncome, setManualIncome }) 
             </div>
             <div className="flex flex-wrap gap-2 pt-2">
               {categories.map(cat => (
-                <div key={cat} className="flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-lg group hover:border-primary hover:bg-primary/5 transition-all">
+                <div key={cat} className="flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-lg group hover:border-primary transition-all">
                   <span className="text-sm font-semibold text-white">{cat}</span>
                   <button onClick={() => removeCategory(cat)} className="text-text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition-all">
                     <Trash2 size={14} />
@@ -139,12 +159,6 @@ const Settings = ({ categories, setCategories, manualIncome, setManualIncome }) 
               ))}
             </div>
           </div>
-        </section>
-
-        {/* Other Settings */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SettingsCard icon={<Bell size={20} />} title="Notifications" desc="Configure alerts and reminders" />
-          <SettingsCard icon={<Shield size={20} />} title="Security" desc="Password and 2FA settings" />
         </section>
       </div>
     </div>
